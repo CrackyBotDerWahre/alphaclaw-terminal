@@ -1,0 +1,14 @@
+{
+  "portfolio": {
+    "CASH": 100000.0,
+    "BTC": 0.0,
+    "ETH": 0.0,
+    "SOL": 0.0
+  },
+  "history": [],
+  "stats": {
+    "totalValue": 100000.0,
+    "profit": 0.0,
+    "profitPercent": 0.0
+  }
+}
