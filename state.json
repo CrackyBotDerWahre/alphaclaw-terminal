@@ -5,10 +5,19 @@
     "ETH": 0.0,
     "SOL": 0.0
   },
-  "history": [],
-  "stats": {
-    "totalValue": 100000.0,
-    "profit": 0.0,
-    "profitPercent": 0.0
-  }
+  "history": [
+    {
+      "asset": "BTC",
+      "type": "BUY",
+      "amount": 0.5,
+      "price": 42100.0,
+      "ts": "2026-02-10T20:50:00Z"
+    }
+  ],
+  "market": {
+    "BTC": {"price": 43562.1, "change": 2.45},
+    "ETH": {"price": 2341.85, "change": -0.12},
+    "SOL": {"price": 104.22, "change": 5.18}
+  },
+  "updated_at": "2026-02-10T20:55:00Z"
 }

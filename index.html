@@ -3,233 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlphaClaw Terminal | AI Quantitative Trading</title>
+    <title>AlphaClaw Terminal v2.0 | Ismail's Quant Lab</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .trading-glow { box-shadow: 0 0 20px rgba(37, 99, 235, 0.15); }
-        .glass-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-    </style>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: '#2563eb',
-                        success: '#10b981',
-                        danger: '#ef4444',
-                        background: '#020617',
-                        card: '#0f172a'
-                    }
-                }
-            }
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --brand: #3b82f6;
+            --success: #10b981;
+            --danger: #f43f5e;
+            --bg: #020617;
         }
-    </script>
-</head>
-<body class="text-slate-200">
 
-    <!-- Navbar -->
-    <nav class="border-b border-slate-800 bg-background/50 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-[1600px] mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2">
-                    <div class="bg-brand p-1.5 rounded-lg">
-                        <i class="lucide-terminal text-white w-5 h-5"></i>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: var(--bg); color: #f8fafc; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .scanline {
+            width: 100%; height: 100px; z-index: 99;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1; position: absolute; bottom: 100%; animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline { 0% { bottom: 100%; } 100% { bottom: -100%; } }
+
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glow-blue { box-shadow: 0 0 30px rgba(59, 130, 246, 0.1); }
+        .neon-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        
+        .btn-trade { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-trade:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    </style>
+</head>
+<body x-data="{ state: { portfolio: {}, history: [], market: {} } }" x-init="fetch('state.json').then(r => r.json()).then(d => state = d)">
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="scanline"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="border-b border-white/5 bg-black/40 sticky top-0 z-50 backdrop-blur-xl">
+        <div class="max-w-[1800px] mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-600 p-2 rounded-xl rotate-3 shadow-lg shadow-blue-900/20">
+                        <i class="lucide-zap text-white w-6 h-6"></i>
                     </div>
-                    <span class="text-xl font-extrabold tracking-tighter">ALPHA<span class="text-brand">CLAW</span></span>
-                </div>
-                <div class="hidden md:flex gap-4 text-sm font-medium text-slate-400">
-                    <a href="#" class="text-white">Terminal</a>
-                    <a href="#" class="hover:text-white transition">Portfolio</a>
-                    <a href="#" class="hover:text-white transition">Signals</a>
-                    <a href="#" class="hover:text-white transition">History</a>
+                    <div>
+                        <span class="text-2xl font-black tracking-tighter neon-text uppercase">Alpha<span class="text-blue-500">Claw</span></span>
+                        <span class="block text-[10px] mono text-blue-400 font-bold -mt-1">V2.0 QUANT-TERMINAL</span>
+                    </div>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-900 rounded-full border border-slate-800">
-                    <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-                    <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Live Network</span>
+            
+            <div class="hidden lg:flex items-center gap-6">
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global Balance</span>
+                    <span class="text-xl font-bold tracking-tight text-white mono" x-text="'$' + (state.portfolio.CASH || 0).toLocaleString()">$0.00</span>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer">
-                    <i class="lucide-user w-4 h-4"></i>
+                <div class="h-10 w-[1px] bg-white/5"></div>
+                <div class="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-2xl border border-white/5">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-xs">IR</div>
+                    <span class="text-sm font-semibold">Ismail R.</span>
                 </div>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- Main Grid -->
-    <main class="max-w-[1600px] mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <main class="max-w-[1800px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Left Column: Markets & Assets -->
-        <aside class="lg:col-span-3 space-y-4 order-2 lg:order-1">
-            <div class="glass-card rounded-2xl overflow-hidden">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-                    <h2 class="font-bold text-sm uppercase tracking-wider text-slate-400">Watchlist</h2>
-                    <i class="lucide-plus w-4 h-4 text-slate-500 cursor-pointer"></i>
+        <!-- Left: Intelligence & Watchlist -->
+        <div class="lg:col-span-3 space-y-6">
+            <!-- Market Stats -->
+            <div class="glass rounded-3xl p-6 glow-blue">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="font-bold text-xs uppercase tracking-widest text-slate-500">Hot Watchlist</h2>
+                    <span class="animate-pulse flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                        <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span> LIVE
+                    </span>
                 </div>
-                <div class="divide-y divide-slate-800/50">
-                    <div class="p-4 flex justify-between items-center hover:bg-slate-800/30 transition cursor-pointer">
+                <div class="space-y-4">
+                    <template x-for="(data, asset) in state.market" :key="asset">
+                        <div class="group flex items-center justify-between p-3 rounded-2xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-white/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-xs text-blue-400" x-text="asset[0]"></div>
+                                <div>
+                                    <p class="font-bold text-sm" x-text="asset + '/USD'"></p>
+                                    <p class="text-[10px] text-slate-500 font-medium">Vol: $1.2B</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="mono text-sm font-bold text-white" x-text="'$' + data.price.toLocaleString()"></p>
+                                <p :class="data.change >= 0 ? 'text-emerald-400' : 'text-rose-400'" class="text-[10px] font-black" x-text="(data.change >= 0 ? '+' : '') + data.change + '%'"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- AI Insight -->
+            <div class="glass rounded-3xl p-6 bg-blue-600/5 border-blue-500/20 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-2 opacity-10"><i class="lucide-brain-circuit w-20 h-20"></i></div>
+                <h2 class="font-bold text-xs uppercase tracking-widest text-blue-400 mb-4 flex items-center gap-2">
+                    <i class="lucide-sparkles w-3 h-3"></i> Agent Strategy
+                </h2>
+                <p class="text-sm leading-relaxed text-slate-300 mb-6">
+                    "Ismail, BTC zeigt Anzeichen von Over-Leveraged Longs. Ich erwarte einen kurzen Dip vor dem nächsten Leg Up. <span class="text-blue-400 font-bold">Limit-Order bei $42,5k empfohlen.</span>"
+                </p>
+                <div class="flex gap-2">
+                    <div class="flex-1 h-1 bg-blue-600/20 rounded-full overflow-hidden">
+                        <div class="w-3/4 h-full bg-blue-500"></div>
+                    </div>
+                    <span class="text-[10px] mono text-blue-400">Bullish 75%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: Visual Terminal -->
+        <div class="lg:col-span-6 space-y-6">
+            <div class="glass rounded-[40px] p-8 min-h-[600px] flex flex-col relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-600 to-transparent"></div>
+                
+                <div class="flex justify-between items-start mb-8">
+                    <div class="flex items-center gap-6">
                         <div>
-                            <p class="font-bold">BTC / USDT</p>
-                            <p class="text-[10px] text-slate-500 uppercase">Bitcoin</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="mono font-medium">$43,562.10</p>
-                            <p class="text-[10px] text-success font-bold">+2.45%</p>
-                        </div>
-                    </div>
-                    <div class="p-4 flex justify-between items-center hover:bg-slate-800/30 transition cursor-pointer border-l-2 border-brand bg-brand/5">
-                        <div>
-                            <p class="font-bold">ETH / USDT</p>
-                            <p class="text-[10px] text-slate-500 uppercase">Ethereum</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="mono font-medium">$2,341.85</p>
-                            <p class="text-[10px] text-danger font-bold">-0.12%</p>
-                        </div>
-                    </div>
-                    <div class="p-4 flex justify-between items-center hover:bg-slate-800/30 transition cursor-pointer">
-                        <div>
-                            <p class="font-bold">SOL / USDT</p>
-                            <p class="text-[10px] text-slate-500 uppercase">Solana</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="mono font-medium">$104.22</p>
-                            <p class="text-[10px] text-success font-bold">+5.18%</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card rounded-2xl p-5 space-y-4">
-                <h2 class="font-bold text-sm uppercase tracking-wider text-slate-400">AI Analyst Insight</h2>
-                <div class="p-3 bg-brand/10 border border-brand/20 rounded-xl">
-                    <p class="text-xs leading-relaxed italic text-slate-300">
-                        "Ismail, BTC zeigt ein Bullish-Engulfing Pattern auf dem 4h Chart. Mein RSI-Indikator ist neutral. Strategie: Accumulate."
-                    </p>
-                </div>
-                <button class="w-full bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-xs font-bold transition">Full Report anfordern</button>
-            </div>
-        </aside>
-
-        <!-- Middle Column: Chart & Trading -->
-        <section class="lg:col-span-6 space-y-4 order-1 lg:order-2">
-            <!-- Main Chart Area -->
-            <div class="glass-card rounded-2xl p-4 min-h-[450px] flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center gap-4">
-                        <h1 class="text-2xl font-bold">ETH / USDT</h1>
-                        <span class="bg-slate-800 px-2 py-1 rounded text-xs mono">$2,341.85</span>
-                    </div>
-                    <div class="flex gap-1 bg-slate-900 p-1 rounded-lg">
-                        <button class="px-3 py-1 rounded-md text-[10px] font-bold bg-slate-800">1H</button>
-                        <button class="px-3 py-1 rounded-md text-[10px] font-bold text-slate-500">4H</button>
-                        <button class="px-3 py-1 rounded-md text-[10px] font-bold text-slate-500">1D</button>
-                    </div>
-                </div>
-                <div class="flex-1 w-full bg-slate-900/50 rounded-xl relative overflow-hidden flex items-center justify-center border border-slate-800">
-                    <!-- Placeholder for real chart -->
-                    <canvas id="mainChart"></canvas>
-                    <div class="absolute top-4 left-4 flex gap-2">
-                        <span class="text-[10px] mono text-slate-500">MA(20): 2310.4</span>
-                        <span class="text-[10px] mono text-slate-500">MA(50): 2280.1</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trade Execution Mobile/Tablet -->
-            <div class="grid grid-cols-2 gap-4">
-                <button class="bg-success/20 hover:bg-success/30 border border-success/30 text-success p-4 rounded-2xl flex flex-col items-center gap-1 transition">
-                    <span class="text-xs font-bold uppercase tracking-widest">Buy</span>
-                    <span class="text-lg font-black">Long</span>
-                </button>
-                <button class="bg-danger/20 hover:bg-danger/30 border border-danger/30 text-danger p-4 rounded-2xl flex flex-col items-center gap-1 transition">
-                    <span class="text-xs font-bold uppercase tracking-widest">Sell</span>
-                    <span class="text-lg font-black">Short</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- Right Column: Portfolio & Activity -->
-        <aside class="lg:col-span-3 space-y-4 order-3">
-            <div class="glass-card rounded-2xl p-6 bg-gradient-to-br from-brand/10 to-transparent">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Portfolio Value</p>
-                <h2 class="text-3xl font-black tracking-tighter mb-4">$102,450.00</h2>
-                <div class="flex items-center gap-2 text-success text-sm font-bold">
-                    <i class="lucide-trending-up w-4 h-4"></i>
-                    <span>+$2,450.00 (2.45%)</span>
-                </div>
-                <div class="mt-6 pt-6 border-t border-slate-800 grid grid-cols-2 gap-4">
-                    <div>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold">Buying Power</p>
-                        <p class="mono font-bold text-sm">$45,000</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold">Open Profit</p>
-                        <p class="mono font-bold text-sm text-success">$1,120</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card rounded-2xl overflow-hidden h-[300px] flex flex-col">
-                <div class="p-4 border-b border-slate-800">
-                    <h2 class="font-bold text-sm uppercase tracking-wider text-slate-400">Order History</h2>
-                </div>
-                <div class="flex-1 overflow-y-auto">
-                    <div class="p-4 flex items-center justify-between border-b border-slate-800/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded bg-success/10 text-success flex items-center justify-center">
-                                <i class="lucide-arrow-up-right w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold">Buy BTC</p>
-                                <p class="text-[10px] text-slate-500 uppercase">Completed</p>
+                            <h1 class="text-4xl font-black tracking-tighter text-white">BTC / USDT</h1>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-emerald-400 font-black text-sm">+$1,245.20</span>
+                                <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">+2.84%</span>
                             </div>
                         </div>
-                        <p class="mono text-xs font-bold">$42,100</p>
                     </div>
-                    <div class="p-4 flex items-center justify-between border-b border-slate-800/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded bg-danger/10 text-danger flex items-center justify-center">
-                                <i class="lucide-arrow-down-right w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold">Sell ETH</p>
-                                <p class="text-[10px] text-slate-500 uppercase">Completed</p>
-                            </div>
+                    <div class="flex gap-2 bg-white/5 p-1 rounded-2xl border border-white/5">
+                        <button class="px-5 py-2 rounded-xl text-xs font-bold transition hover:bg-white/10">15M</button>
+                        <button class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-lg shadow-blue-900/50">1H</button>
+                        <button class="px-5 py-2 rounded-xl text-xs font-bold transition hover:bg-white/10">1D</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 w-full bg-slate-900/30 rounded-[32px] border border-white/5 relative flex items-center justify-center group">
+                    <canvas id="mainChart" class="p-4"></canvas>
+                    <div class="absolute bottom-6 left-6 flex gap-4">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">24h High</span>
+                            <span class="mono text-sm font-bold">$44,120</span>
                         </div>
-                        <p class="mono text-xs font-bold">$2,380</p>
+                        <div class="flex flex-col border-l border-white/10 pl-4">
+                            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">24h Low</span>
+                            <span class="mono text-sm font-bold">$42,300</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-2 gap-6">
+                    <button class="btn-trade bg-emerald-500 text-slate-950 h-16 rounded-[24px] font-black text-xl uppercase tracking-tighter flex items-center justify-center gap-3">
+                        <i class="lucide-trending-up w-6 h-6"></i> LONG (Buy)
+                    </button>
+                    <button class="btn-trade bg-rose-500 text-slate-950 h-16 rounded-[24px] font-black text-xl uppercase tracking-tighter flex items-center justify-center gap-3">
+                        <i class="lucide-trending-down w-6 h-6"></i> SHORT (Sell)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Portfolio Engine -->
+        <div class="lg:col-span-3 space-y-6">
+            <div class="glass rounded-3xl p-8 bg-gradient-to-br from-blue-600/10 to-indigo-600/10 border-blue-500/20">
+                <div class="flex items-center gap-3 mb-6">
+                    <i class="lucide-wallet text-blue-400"></i>
+                    <h2 class="font-bold text-xs uppercase tracking-widest text-blue-400">Quant Portfolio</h2>
+                </div>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Portfolio Equity</p>
+                <h3 class="text-4xl font-black text-white tracking-tighter mb-6">$100,000<span class="text-slate-600">.00</span></h3>
+                
+                <div class="space-y-4">
+                    <div class="bg-black/40 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Unrealized PNL</p>
+                        <p class="text-lg font-bold text-emerald-400 mono">+$0.00 <span class="text-[10px]">(0.00%)</span></p>
+                    </div>
+                    <div class="bg-black/40 p-4 rounded-2xl border border-white/5">
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Free Margin</p>
+                        <p class="text-lg font-bold text-white mono">$100,000</p>
                     </div>
                 </div>
             </div>
-        </aside>
+
+            <!-- Activity Log -->
+            <div class="glass rounded-3xl overflow-hidden flex flex-col h-[400px]">
+                <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                    <h2 class="font-bold text-xs uppercase tracking-widest text-slate-500">Log Activity</h2>
+                    <i class="lucide-database w-4 h-4 text-slate-700"></i>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                    <template x-for="trade in state.history" :key="trade.ts">
+                        <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                            <div class="flex items-center gap-3">
+                                <div :class="trade.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'" class="w-8 h-8 rounded-lg flex items-center justify-center">
+                                    <i :class="trade.type === 'BUY' ? 'lucide-arrow-up-right' : 'lucide-arrow-down-right'" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black" x-text="trade.type + ' ' + trade.asset"></p>
+                                    <p class="text-[8px] text-slate-500 font-bold" x-text="new Date(trade.ts).toLocaleTimeString()"></p>
+                                </div>
+                            </div>
+                            <p class="mono text-[10px] font-bold text-white" x-text="'$' + trade.price.toLocaleString()"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
 
     </main>
 
     <script>
-        // Fake Chart Initialization
         const ctx = document.getElementById('mainChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: Array.from({length: 20}, (_, i) => i),
+                labels: Array.from({length: 40}, (_, i) => ''),
                 datasets: [{
-                    label: 'Price',
-                    data: [2300, 2310, 2305, 2320, 2340, 2335, 2350, 2360, 2345, 2330, 2340, 2355, 2370, 2360, 2340, 2350, 2365, 2341, 2341, 2341],
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    data: [42000, 42100, 42050, 42200, 42400, 42350, 42500, 42600, 42450, 42300, 42400, 42550, 42700, 42600, 42400, 42500, 42650, 42800, 42900, 43100, 43050, 43200, 43400, 43350, 43500, 43600, 43450, 43300, 43400, 43550, 43700, 43600, 43400, 43500, 43650, 43800, 43562, 43562, 43562, 43562],
+                    borderColor: '#3b82f6',
+                    backgroundColor: gradient,
                     fill: true,
                     tension: 0.4,
-                    borderWidth: 2,
-                    pointRadius: 0
+                    borderWidth: 3,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHitRadius: 30,
+                    pointBackgroundColor: '#3b82f6',
                 }]
             },
             options: {
@@ -237,9 +245,10 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { display: false },
-                    x: { display: false }
-                }
+                    y: { grid: { display: false }, border: { display: false }, ticks: { display: false } },
+                    x: { grid: { display: false }, border: { display: false }, ticks: { display: false } }
+                },
+                interaction: { intersect: false, mode: 'index' }
             }
         });
     </script>
