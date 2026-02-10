@@ -15,9 +15,18 @@
     }
   ],
   "market": {
-    "BTC": {"price": 43562.1, "change": 2.45},
-    "ETH": {"price": 2341.85, "change": -0.12},
-    "SOL": {"price": 104.22, "change": 5.18}
+    "BTC": {
+      "price": 68899,
+      "change": -2.4
+    },
+    "ETH": {
+      "price": 2015.31,
+      "change": -4.96
+    },
+    "SOL": {
+      "price": 82.73,
+      "change": -5.62
+    }
   },
-  "updated_at": "2026-02-10T20:55:00Z"
+  "updated_at": "2026-02-10T22:10:22.549110"
 }
