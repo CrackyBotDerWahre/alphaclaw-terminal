@@ -14,18 +14,23 @@
         .border-gray { border-color: #1a1a1a; }
         .bg-card { background-color: #0a0a0a; }
         .tradingview-widget-container { height: 100% !important; width: 100% !important; }
+        /* Mobile Scroll Optimization */
+        @media (max-width: 1024px) {
+            .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            .hide-scrollbar::-webkit-scrollbar { display: none; }
+        }
     </style>
 </head>
-<body x-data="{ state: { portfolio: {}, history: [], market: {} }, activeAsset: 'BTC' }" x-init="fetch('state.json').then(r => r.json()).then(d => state = d)">
+<body x-data="{ state: { portfolio: {}, history: [], market: {} }, activeAsset: 'BTC', mobileTab: 'chart' }" x-init="fetch('state.json').then(r => r.json()).then(d => state = d)">
 
     <!-- Top Navigation (Bloomberg Style) -->
-    <nav class="h-12 bg-[#12151a] border-b border-[#2a2e39] flex items-center px-4 justify-between">
-        <div class="flex items-center gap-6">
-            <div class="flex items-center gap-2 border-r border-[#2a2e39] pr-6">
+    <nav class="h-12 bg-[#12151a] border-b border-[#2a2e39] flex items-center px-4 justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-4 lg:gap-6 overflow-x-auto hide-scrollbar">
+            <div class="flex items-center gap-2 border-r border-[#2a2e39] pr-4 lg:pr-6 shrink-0">
                 <span class="font-black text-sm tracking-tighter text-blue-500">ALPHA<span class="text-white">CLAW</span></span>
-                <span class="bg-blue-600/20 text-blue-500 text-[10px] font-bold px-1.5 rounded">PRO</span>
+                <span class="hidden sm:inline bg-blue-600/20 text-blue-500 text-[10px] font-bold px-1.5 rounded">PRO</span>
             </div>
-            <div class="flex gap-6 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <div class="flex gap-4 lg:gap-6 text-[11px] font-bold uppercase tracking-wider text-slate-400 whitespace-nowrap">
                 <template x-for="(data, asset) in state.market" :key="asset">
                     <div class="flex items-center gap-2 cursor-pointer hover:text-white" @click="activeAsset = asset">
                         <span x-text="asset"></span>
@@ -34,23 +39,23 @@
                 </template>
             </div>
         </div>
-        <div class="flex items-center gap-4 text-[10px] font-bold text-slate-500">
+        <div class="hidden md:flex items-center gap-4 text-[10px] font-bold text-slate-500 shrink-0">
             <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> CONNECTED</span>
             <span class="mono" x-text="new Date().toLocaleTimeString()"></span>
         </div>
     </nav>
 
     <!-- Main Workspace -->
-    <main class="grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-48px)] overflow-hidden">
+    <main class="flex flex-col lg:grid lg:grid-cols-12 h-[calc(100vh-96px)] lg:h-[calc(100vh-48px)] overflow-hidden">
         
-        <!-- Left: Assets & Signals -->
-        <div class="lg:col-span-2 border-r border-[#2a2e39] bg-[#12151a] flex flex-col">
+        <!-- Assets (Hidden on Mobile unless Tab active) -->
+        <div class="hidden lg:flex lg:col-span-2 border-r border-[#2a2e39] bg-[#12151a] flex-col overflow-hidden" :class="mobileTab === 'market' ? '!flex fixed inset-0 z-40 mt-12 mb-12' : ''">
             <div class="p-3 border-b border-[#2a2e39] bg-black/20">
                 <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Market Assets</h2>
             </div>
             <div class="flex-1 overflow-y-auto">
                 <template x-for="(data, asset) in state.market" :key="asset">
-                    <div class="p-4 border-b border-[#2a2e39] hover:bg-[#1e222d] cursor-pointer transition" :class="activeAsset === asset ? 'bg-[#1e222d] border-l-2 border-blue-500' : ''" @click="activeAsset = asset">
+                    <div class="p-4 border-b border-[#2a2e39] hover:bg-[#1e222d] cursor-pointer transition" :class="activeAsset === asset ? 'bg-[#1e222d] border-l-2 border-blue-500' : ''" @click="activeAsset = asset; if(window.innerWidth < 1024) mobileTab = 'chart'">
                         <div class="flex justify-between items-start mb-1">
                             <span class="font-bold text-sm" x-text="asset + 'USDT'"></span>
                             <span :class="data.change >= 0 ? 'text-emerald-400' : 'text-rose-500'" class="text-[10px] font-bold" x-text="(data.change >= 0 ? '+' : '') + data.change + '%'"></span>
@@ -59,85 +64,83 @@
                     </div>
                 </template>
             </div>
-            <div class="p-4 bg-blue-600/5 border-t border-[#2a2e39]">
-                <h3 class="text-[10px] font-bold text-blue-500 uppercase mb-2">Agent Insight</h3>
-                <p class="text-[11px] leading-relaxed text-slate-400 italic">"High volatility detected. Maintain neutral position."</p>
-            </div>
         </div>
 
         <!-- Center: Real-Time Charting -->
-        <div class="lg:col-span-7 bg-black flex flex-col">
+        <div class="flex-1 lg:col-span-7 bg-black flex flex-col min-h-0" :class="mobileTab === 'chart' ? 'flex' : 'hidden lg:flex'">
             <div class="h-full w-full" id="tradingview_widget">
-                <!-- TradingView Widget BEGIN -->
                 <div class="tradingview-widget-container">
-                    <iframe scrolling="no" allowtransparency="true" frameborder="0" :src="'https://s.tradingview.com/widgetembed/?frameElementId=tradingview_762ae&symbol=BINANCE%3A' + activeAsset + 'USDT&interval=60&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=%5B%5D&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=de&utm_source=crackybot&utm_medium=widget&utm_campaign=chart&utm_term=BINANCE%3A' + activeAsset + 'USDT'" style="width: 100%; height: 100%;"></iframe>
+                    <iframe scrolling="no" allowtransparency="true" frameborder="0" :src="'https://s.tradingview.com/widgetembed/?frameElementId=tradingview_762ae&symbol=BINANCE%3A' + activeAsset + 'USDT&interval=60&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&theme=dark&style=1&timezone=Etc%2FUTC&locale=de'" style="width: 100%; height: 100%;"></iframe>
                 </div>
-                <!-- TradingView Widget END -->
             </div>
         </div>
 
-        <!-- Right: Execution & Portfolio -->
-        <div class="lg:col-span-3 border-l border-[#2a2e39] bg-[#12151a] flex flex-col">
+        <!-- Execution & Portfolio -->
+        <div class="hidden lg:flex lg:col-span-3 border-l border-[#2a2e39] bg-[#12151a] flex-col overflow-hidden" :class="mobileTab === 'trade' ? '!flex fixed inset-0 z-40 mt-12 mb-12' : ''">
             <!-- Portfolio Box -->
-            <div class="p-6 border-b border-[#2a2e39] bg-gradient-to-b from-blue-600/10 to-transparent">
-                <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">Account Equity</h2>
-                <div class="mb-6">
-                    <p class="text-4xl font-black tracking-tighter mono" x-text="'$' + (state.portfolio.CASH || 0).toLocaleString()">$100,000</p>
-                    <p class="text-emerald-400 text-[11px] font-bold mt-1">+$2,410.50 (Live PNL)</p>
+            <div class="p-6 border-b border-[#2a2e39] bg-gradient-to-b from-blue-600/10 to-transparent shrink-0">
+                <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Equity</h2>
+                <div class="mb-4">
+                    <p class="text-3xl lg:text-4xl font-black tracking-tighter mono" x-text="'$' + (state.portfolio.CASH || 0).toLocaleString()"></p>
+                    <p class="text-emerald-400 text-[10px] font-bold mt-1">+$2,410.50 LIVE</p>
                 </div>
-                <div class="grid grid-cols-2 gap-4 text-[10px] font-bold">
-                    <div class="p-3 bg-black/40 rounded-lg border border-white/5">
-                        <span class="text-slate-500 uppercase">Margin</span>
-                        <p class="text-white mt-1">$45.2k</p>
+                <div class="grid grid-cols-2 gap-3 text-[10px] font-bold">
+                    <div class="p-2 bg-black/40 rounded border border-white/5 text-center">
+                        <span class="text-slate-500">MARGIN</span>
+                        <p class="text-white">$45.2k</p>
                     </div>
-                    <div class="p-3 bg-black/40 rounded-lg border border-white/5">
-                        <span class="text-slate-500 uppercase">Leverage</span>
-                        <p class="text-white mt-1">1.0x</p>
+                    <div class="p-2 bg-black/40 rounded border border-white/5 text-center">
+                        <span class="text-slate-500">LEV</span>
+                        <p class="text-white">1.0x</p>
                     </div>
                 </div>
             </div>
 
             <!-- Trade Form -->
-            <div class="p-6 border-b border-[#2a2e39]">
-                <div class="flex gap-2 mb-6">
-                    <button class="flex-1 py-3 rounded-lg bg-emerald-500 text-black font-black text-sm uppercase tracking-tighter hover:brightness-110 transition">Long</button>
-                    <button class="flex-1 py-3 rounded-lg bg-rose-500 text-black font-black text-sm uppercase tracking-tighter hover:brightness-110 transition">Short</button>
+            <div class="p-6 border-b border-[#2a2e39] shrink-0">
+                <div class="flex gap-2 mb-4">
+                    <button class="flex-1 py-3 rounded bg-emerald-500 text-black font-black text-xs uppercase tracking-tighter hover:brightness-110">Buy</button>
+                    <button class="flex-1 py-3 rounded bg-rose-500 text-black font-black text-xs uppercase tracking-tighter hover:brightness-110">Sell</button>
                 </div>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center text-[11px] font-bold">
-                        <span class="text-slate-500">Order Type</span>
-                        <span class="text-white">MARKET</span>
-                    </div>
-                    <div class="h-[1px] bg-white/5"></div>
-                    <div class="flex justify-between items-center text-[11px] font-bold">
-                        <span class="text-slate-500">Available</span>
-                        <span class="text-white mono" x-text="'$' + (state.portfolio.CASH || 0).toLocaleString()"></span>
-                    </div>
+                <div class="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase">
+                    <span>Available</span>
+                    <span class="text-white mono" x-text="'$' + (state.portfolio.CASH || 0).toLocaleString()"></span>
                 </div>
             </div>
 
-            <!-- Recent History -->
-            <div class="flex-1 flex flex-col min-h-0">
+            <!-- History -->
+            <div class="flex-1 overflow-y-auto">
                 <div class="p-3 bg-black/20 border-b border-[#2a2e39]">
-                    <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Order History</h2>
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">History</h2>
                 </div>
-                <div class="flex-1 overflow-y-auto">
-                    <template x-for="trade in state.history" :key="trade.ts">
-                        <div class="p-4 border-b border-[#2a2e39] flex justify-between items-center hover:bg-white/5 transition">
-                            <div class="flex items-center gap-3">
-                                <i :class="trade.type === 'BUY' ? 'lucide-arrow-up-right text-emerald-400' : 'lucide-arrow-down-right text-rose-500'" class="w-4 h-4"></i>
-                                <div>
-                                    <p class="text-[11px] font-black" x-text="trade.type + ' ' + trade.asset"></p>
-                                    <p class="text-[9px] text-slate-500 font-bold" x-text="new Date(trade.ts).toLocaleTimeString()"></p>
-                                </div>
+                <template x-for="trade in state.history" :key="trade.ts">
+                    <div class="p-4 border-b border-[#2a2e39] flex justify-between items-center hover:bg-white/5 transition">
+                        <div class="flex items-center gap-3">
+                            <i :class="trade.type === 'BUY' ? 'text-emerald-400' : 'text-rose-500'" class="text-[10px] font-bold" x-text="trade.type"></i>
+                            <div>
+                                <p class="text-[11px] font-black" x-text="trade.asset"></p>
+                                <p class="text-[9px] text-slate-500" x-text="new Date(trade.ts).toLocaleTimeString()"></p>
                             </div>
-                            <span class="mono text-[11px] font-bold" x-text="'$' + trade.price.toLocaleString()"></span>
                         </div>
-                    </template>
-                </div>
+                        <span class="mono text-[11px] font-bold" x-text="'$' + trade.price.toLocaleString()"></span>
+                    </div>
+                </template>
             </div>
         </div>
     </main>
+
+    <!-- Mobile Navigation Tab Bar -->
+    <nav class="lg:hidden h-12 bg-[#12151a] border-t border-[#2a2e39] flex items-center justify-around fixed bottom-0 left-0 right-0 z-50">
+        <button @click="mobileTab = 'market'" class="flex flex-col items-center gap-1" :class="mobileTab === 'market' ? 'text-blue-500' : 'text-slate-500'">
+            <div class="text-[10px] font-black uppercase">Market</div>
+        </button>
+        <button @click="mobileTab = 'chart'" class="flex flex-col items-center gap-1" :class="mobileTab === 'chart' ? 'text-blue-500' : 'text-slate-500'">
+            <div class="text-[10px] font-black uppercase">Chart</div>
+        </button>
+        <button @click="mobileTab = 'trade'" class="flex flex-col items-center gap-1" :class="mobileTab === 'trade' ? 'text-blue-500' : 'text-slate-500'">
+            <div class="text-[10px] font-black uppercase">Trade</div>
+        </button>
+    </nav>
 
 </body>
 </html>

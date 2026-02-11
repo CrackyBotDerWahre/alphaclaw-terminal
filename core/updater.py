@@ -1,12 +1,15 @@
 import json
-import requests
+import http.client
 from datetime import datetime
+import os
 
 def fetch_and_update():
-    url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true"
     try:
-        response = requests.get(url)
-        data = response.json()
+        conn = http.client.HTTPSConnection("api.coingecko.com")
+        headers = {"User-Agent": "OpenClawAgent"}
+        conn.request("GET", "/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true", headers=headers)
+        response = conn.getresponse()
+        data = json.loads(response.read().decode())
         
         market = {
             "BTC": {"price": data["bitcoin"]["usd"], "change": round(data["bitcoin"]["usd_24h_change"], 2)},
@@ -14,8 +17,8 @@ def fetch_and_update():
             "SOL": {"price": data["solana"]["usd"], "change": round(data["solana"]["usd_24h_change"], 2)}
         }
         
-        # Update state.json
-        state_path = 'state.json'
+        # Update state.json at workspace root if possible, or local to script
+        state_path = os.path.join(os.path.dirname(__file__), '..', 'state.json')
         if os.path.exists(state_path):
             with open(state_path, 'r') as f:
                 state = json.load(f)
@@ -32,5 +35,4 @@ def fetch_and_update():
         print(f"Update failed: {e}")
 
 if __name__ == "__main__":
-    import os
     fetch_and_update()
