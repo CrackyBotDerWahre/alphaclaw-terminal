@@ -21,7 +21,7 @@
         }
     </style>
 </head>
-<body x-data="{ state: { portfolio: {}, history: [], market: {} }, activeAsset: 'BTC', mobileTab: 'chart' }" x-init="fetch('state.json').then(r => r.json()).then(d => state = d)">
+<body x-data="{ state: { portfolio: {}, history: [], market: {} }, activeAsset: 'BTC', mobileTab: 'chart' }" x-init="fetch('state.json?t=' + Date.now()).then(r => r.json()).then(d => state = d)">
 
     <!-- Top Navigation (Bloomberg Style) -->
     <nav class="h-12 bg-[#12151a] border-b border-[#2a2e39] flex items-center px-4 justify-between sticky top-0 z-50">
